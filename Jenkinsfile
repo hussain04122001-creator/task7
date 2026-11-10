@@ -22,10 +22,13 @@ pipeline {
 
         stage('OWASP Dependency Check') {
             steps {
+                sh 'mkdir -p dependency-check-report'
+
                 dependencyCheck(
                     additionalArguments: '--scan . --format HTML --format XML --out dependency-check-report',
                     odcInstallation: 'DP-Check'
                 )
+
                 dependencyCheckPublisher(
                     pattern: 'dependency-check-report/dependency-check-report.xml'
                 )
