@@ -24,10 +24,12 @@ pipeline {
             steps {
                 sh 'mkdir -p dependency-check-report'
 
-                dependencyCheck(
-                    additionalArguments: '--scan . --format HTML --format XML --out dependency-check-report',
-                    odcInstallation: 'DP-Check'
-                )
+                withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
+                    dependencyCheck(
+                        additionalArguments: "--scan . --format HTML --format XML --out dependency-check-report --nvdApiKey ${NVD_API_KEY}",
+                        odcInstallation: 'DP-Check'
+                    )
+                }
 
                 dependencyCheckPublisher(
                     pattern: 'dependency-check-report/dependency-check-report.xml'
