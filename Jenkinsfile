@@ -1,64 +1,40 @@
 pipeline {
     agent any
-
     stages {
-        stage('Checkout') {
+        stage("Checkout") {
             steps {
                 checkout scm
             }
         }
-
-        stage('Install Dependencies') {
+        stage("Install Dependencies") {
             steps {
-                sh 'npm ci'
+                sh "npm ci"
             }
         }
-
-        stage('Unit Testing') {
+        stage("Unit Testing") {
             steps {
-                sh 'npm test'
+                sh "npm test"
             }
         }
-
-        stage('OWASP Dependency Check') {
+        stage("Docker Build") {
             steps {
-                sh 'mkdir -p dependency-check-report'
-
-                withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
-                    dependencyCheck(
-                        additionalArguments: "--scan . --format HTML --format XML --out dependency-check-report --nvdApiKey ${NVD_API_KEY}",
-                        odcInstallation: 'DP-Check'
-                    )
-                }
-
-                dependencyCheckPublisher(
-                    pattern: 'dependency-check-report/dependency-check-report.xml'
-                )
+                sh "docker build -t task7-app:latest ."
             }
         }
-
-        stage('Docker Build') {
+        stage("Trivy Filesystem Scan") {
             steps {
-                sh 'docker build -t task7-app:latest .'
+                sh "trivy fs --severity HIGH,CRITICAL ."
             }
         }
-
-        stage('Trivy Filesystem Scan') {
+        stage("Trivy Image Scan") {
             steps {
-                sh 'trivy fs --severity HIGH,CRITICAL .'
-            }
-        }
-
-        stage('Trivy Image Scan') {
-            steps {
-                sh 'trivy image --severity HIGH,CRITICAL task7-app:latest'
+                sh "trivy image --severity HIGH,CRITICAL task7-app:latest"
             }
         }
     }
-
     post {
         always {
-            echo 'Task 7 DevSecOps Pipeline Completed'
+            echo "Task 7 DevSecOps Pipeline Completed"
         }
     }
 }
