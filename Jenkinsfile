@@ -20,11 +20,23 @@ pipeline {
             }
         }
 
+        stage("OWASP Dependency Check") {
+            steps {
+                dependencyCheck(
+                    odcInstallation: 'DP-Check',
+                    nvdCredentialsId: 'nvd-api-key',
+                    additionalArguments: '--scan . --format ALL'
+                )
+                dependencyCheckPublisher(
+                    pattern: '**/dependency-check-report.xml'
+                )
+            }
+        }
+
         stage("SonarQube Analysis") {
             steps {
                 script {
                     def scannerHome = tool 'SonarScanner'
-
                     withSonarQubeEnv('SonarQube') {
                         sh "${scannerHome}/bin/sonar-scanner"
                     }
